@@ -114,7 +114,7 @@ export default function Declaratie() {
               <td>
                 {decl.folder_output
                   ? <><code style={{ fontSize: 11 }}>{decl.folder_output}</code>
-                    {" "}<button className="btn btn-ghost btn-sm" style={{ marginLeft: 8 }} onClick={() => fetch(`/api/declaratii/${id}/folder`)}>📁 Deschide</button></>
+                    {" "}<button className="btn btn-ghost btn-sm" style={{ marginLeft: 8 }} onClick={() => window.open(`/api/declaratii/${id}/folder`, "_blank")}>📁 Deschide</button></>
                   : "—"}
               </td>
             </tr>
@@ -138,7 +138,7 @@ export default function Declaratie() {
             </button>
           )}
           {decl.folder_output && (
-            <button className="btn btn-outline" onClick={() => fetch(`/api/declaratii/${id}/folder`)}>
+            <button className="btn btn-outline" onClick={() => window.open(`/api/declaratii/${id}/folder`, "_blank")}>
               📁 Deschide folder
             </button>
           )}

@@ -433,7 +433,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                 <button className="btn btn-outline btn-sm" onClick={() => navigate(`/declaratii/${rezultat.id}`)}>
                   Detalii declarație
                 </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => fetch(`/api/declaratii/${rezultat.id}/folder`)}>
+                <button className="btn btn-ghost btn-sm" onClick={() => window.open(`/api/declaratii/${rezultat.id}/folder`, "_blank")}>
                   📁 Deschide folder
                 </button>
                 <a href={`/api/declaratii/${rezultat.id}/download`} className="btn btn-ghost btn-sm">

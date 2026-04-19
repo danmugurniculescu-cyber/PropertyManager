@@ -310,7 +310,7 @@ export default function UploadBooking() {
             📁 Folder: <code style={{ fontSize: 12, background: "#bbf7d0", padding: "2px 6px", borderRadius: 4 }}>{rezultat.folder_output}</code>
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button className="btn btn-success" onClick={() => fetch(`/api/declaratii/${rezultat.id}/folder`)}>
+            <button className="btn btn-success" onClick={() => window.open(`/api/declaratii/${rezultat.id}/folder`, "_blank")}>
               📁 Deschide folder
             </button>
             <button className="btn btn-outline" onClick={() => navigate(`/declaratii/${rezultat.id}`)}>

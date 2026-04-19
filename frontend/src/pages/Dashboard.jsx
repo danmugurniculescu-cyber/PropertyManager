@@ -130,7 +130,7 @@ export default function Dashboard() {
                           Detalii
                         </button>
                         {d.folder_output && (
-                          <button className="btn btn-ghost btn-sm" onClick={() => fetch(`/api/declaratii/${d.id}/folder`)}>
+                          <button className="btn btn-ghost btn-sm" onClick={() => window.open(`/api/declaratii/${d.id}/folder`, "_blank")}>
                             📁 Folder
                           </button>
                         )}

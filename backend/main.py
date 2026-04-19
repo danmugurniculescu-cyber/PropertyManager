@@ -842,22 +842,30 @@ def descarca_pdf(id: int, session: Session = Depends(get_session)):
 
 
 @app.get("/api/declaratii/{id}/folder")
-def deschide_folder(id: int, session: Session = Depends(get_session)):
+def descarca_folder(id: int, session: Session = Depends(get_session)):
+    import zipfile
+    import io
+    from fastapi.responses import StreamingResponse
+
     decl = session.get(Declaratie, id)
     if not decl:
         raise HTTPException(status_code=404, detail="Declarație negăsită")
     if not decl.folder_output or not Path(decl.folder_output).exists():
         raise HTTPException(status_code=404, detail="Folderul output nu există.")
 
-    folder = str(Path(decl.folder_output).resolve())
-    if sys.platform == "win32":
-        os.startfile(folder)
-    elif sys.platform == "darwin":
-        subprocess.Popen(["open", folder])
-    else:
-        subprocess.Popen(["xdg-open", folder])
-
-    return {"folder": folder, "deschis": True}
+    folder = Path(decl.folder_output)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in folder.iterdir():
+            if f.is_file():
+                zf.write(f, f.name)
+    buf.seek(0)
+    zip_name = f"declaratie_{id}.zip"
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={zip_name}"},
+    )
 
 
 @app.delete("/api/declaratii/{id}")
