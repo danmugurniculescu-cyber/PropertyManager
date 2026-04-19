@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -1017,14 +1017,15 @@ def actualizeaza_status_fisa(
 @app.get("/api/fise/{id}/mesaj")
 def genereaza_mesaj(
     id: int,
+    request: Request,
     limba: str = "ro",
-    base_url: str = "http://localhost:5173",
     session: Session = Depends(get_session),
 ):
     fisa = session.get(FisaOaspete, id)
     if not fisa:
         raise HTTPException(status_code=404, detail="Fișă negăsită")
-    link = f"{base_url}/fisa/{fisa.token}"
+    base = str(request.base_url).rstrip("/")
+    link = f"{base}/fisa/{fisa.token}"
     template = MESAJ_RO if limba == "ro" else MESAJ_EN
     mesaj = template.format(
         nume=fisa.nume_turist or ("Oaspete" if limba == "ro" else "Guest"),
