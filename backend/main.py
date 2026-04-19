@@ -868,6 +868,50 @@ def descarca_folder(id: int, session: Session = Depends(get_session)):
     )
 
 
+@app.post("/api/declaratii/{id}/regenereaza")
+def regenereaza_declaratie(id: int, session: Session = Depends(get_session)):
+    """Regenerează PDF și folderul pentru o declarație existentă din datele din DB."""
+    decl = session.get(Declaratie, id)
+    if not decl:
+        raise HTTPException(status_code=404, detail="Declarație negăsită")
+
+    prop = session.get(Proprietate, decl.proprietate_id)
+    if not prop:
+        raise HTTPException(status_code=404, detail="Proprietate negăsită")
+
+    if not Path(prop.template_pdf).exists():
+        raise HTTPException(status_code=500, detail=f"Template PDF negăsit: {prop.template_pdf}")
+
+    luna, an = decl.luna, decl.an
+    pdf_filename = f"declaratie_taxa_{luna:02d}_{an}.pdf"
+    pdf_tmp = Path(tempfile.mkdtemp()) / pdf_filename
+
+    genereaza_pdf(
+        template_path=prop.template_pdf,
+        output_path=str(pdf_tmp),
+        luna=luna, an=an,
+        total_nopti=decl.total_nopti,
+        total_persoane_zile=decl.total_persoane_zile,
+        taxa_totala=decl.taxa_totala,
+    )
+
+    folder_path = construieste_folder(
+        proprietate_slug=prop.slug,
+        luna=luna, an=an,
+        pdf_declaratie_path=str(pdf_tmp),
+        documente_statice_dir=str(BASE_DIR / "data" / "proprietati" / prop.slug / "documente_statice"),
+        output_base_dir=str(OUTPUT_DIR),
+    )
+
+    pdf_final = str(Path(folder_path) / pdf_filename)
+    decl.pdf_path = pdf_final
+    decl.folder_output = folder_path
+    session.add(decl)
+    session.commit()
+
+    return {"ok": True, "folder_output": folder_path, "pdf_path": pdf_final}
+
+
 @app.delete("/api/declaratii/{id}")
 def sterge_declaratie(id: int, session: Session = Depends(get_session)):
     decl = session.get(Declaratie, id)

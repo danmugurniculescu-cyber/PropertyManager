@@ -19,6 +19,7 @@ export default function Declaratie() {
   const [error, setError] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [loadingDelete, setLoadingDelete] = useState(false);
+  const [loadingRegen, setLoadingRegen] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -43,6 +44,17 @@ export default function Declaratie() {
       else setError("Eroare la actualizarea statusului.");
     } finally {
       setLoadingStatus(false);
+    }
+  }
+
+  async function handleRegen() {
+    setLoadingRegen(true);
+    try {
+      const res = await fetch(`/api/declaratii/${id}/regenereaza`, { method: "POST" });
+      if (!res.ok) { const d = await res.json(); alert(d.detail || "Eroare la regenerare"); return; }
+      await load();
+    } finally {
+      setLoadingRegen(false);
     }
   }
 
@@ -137,9 +149,12 @@ export default function Declaratie() {
               {loadingStatus ? <><span className="spinner" /> Se salvează...</> : "✅ Marchează ca depus"}
             </button>
           )}
+          <button className="btn btn-outline" onClick={handleRegen} disabled={loadingRegen}>
+            {loadingRegen ? <><span className="spinner" /> Se regenerează...</> : "🔄 Regenerează declarație"}
+          </button>
           {decl.folder_output && (
             <button className="btn btn-outline" onClick={() => window.open(`/api/declaratii/${id}/folder`, "_blank")}>
-              📁 Deschide folder
+              📁 Descarcă folder
             </button>
           )}
           {decl.pdf_path && (
