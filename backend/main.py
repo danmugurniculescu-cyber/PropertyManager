@@ -40,7 +40,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
+    db_url = os.environ.get("DATABASE_URL", "")
+    print(f"[startup] DATABASE_URL present: {bool(db_url)}, starts_with_postgres: {db_url.startswith('postgres')}", flush=True)
     init_db()
+    print("[startup] init_db() complete", flush=True)
 
 
 # ──────────────────────────────────────────────
