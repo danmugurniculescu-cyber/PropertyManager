@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# SQLite local DB (nu se commitează — Railway folosește PostgreSQL)
+data/db.sqlite
+
+# Output generated (fișiere generate local, nu sunt necesare în repo)
+output/
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
+# Logs
+*.log
+error.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
