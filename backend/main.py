@@ -505,6 +505,8 @@ async def scan_xls(
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    _sync_fise(proprietate_id, session)
+
     rezultat = _grupuri_din_db(proprietate_id, session)
     rezultat["import_stats"] = stats
     return rezultat
@@ -931,6 +933,36 @@ It only takes about 2 minutes and is mandatory for check-in.
 
 Kind regards,
 Dan"""
+
+
+def _sync_fise(proprietate_id: int, session: Session):
+    """Creează/actualizează FisaOaspete pentru toate rezervările din proprietate."""
+    from models import RezervaraImportata
+    rezervari = session.exec(
+        select(RezervaraImportata).where(RezervaraImportata.proprietate_id == proprietate_id)
+    ).all()
+    for r in rezervari:
+        fisa = session.exec(
+            select(FisaOaspete).where(FisaOaspete.booking_id == r.booking_id)
+        ).first()
+        if fisa:
+            fisa.nume_turist = r.nume_turist
+            fisa.email = r.email
+            fisa.telefon = r.telefon
+            fisa.check_in = r.check_in
+            fisa.check_out = r.check_out
+            session.add(fisa)
+        else:
+            session.add(FisaOaspete(
+                booking_id=r.booking_id,
+                proprietate_id=proprietate_id,
+                check_in=r.check_in,
+                check_out=r.check_out,
+                nume_turist=r.nume_turist,
+                email=r.email,
+                telefon=r.telefon,
+            ))
+    session.commit()
 
 
 @app.post("/api/fise/import")
