@@ -326,7 +326,7 @@ export default function FisaTurist() {
                           </span>
                         </td>
                         <td>
-                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "nowrap", alignItems: "center" }}>
                             <button className="btn btn-primary btn-sm" onClick={() => setModalFisa(f)}>📨 Mesaj</button>
                             {f.status === "netrimis" && (
                               <button className="btn btn-outline btn-sm" onClick={() => marcheazaTrimis(f)}>✓ Trimis</button>
