@@ -961,7 +961,7 @@ from models import FisaOaspete, StatusFisa
 
 MESAJ_RO = """Bună ziua, {nume}!
 
-Vă mulțumim că ați ales să ne vizitați. Vă rugăm să completați fișa de înregistrare înainte de sosire, accesând link-ul de mai jos:
+Vă rugăm să completați fișa de înregistrare înainte de sosire, accesând link-ul de mai jos:
 
 {link}
 
@@ -977,7 +977,7 @@ Dan"""
 
 MESAJ_EN = """Dear {nume},
 
-Thank you for choosing to stay with us! Please complete the guest registration form before your arrival by clicking the link below:
+Please complete the guest registration form before your arrival by clicking the link below:
 
 {link}
 
