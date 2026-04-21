@@ -644,6 +644,11 @@ def sterge_rezervari_luna(
             for i in range((r.check_out - r.check_in).days)
         )
         if are_nopti:
+            fisa = session.exec(
+                select(FisaOaspete).where(FisaOaspete.booking_id == r.booking_id)
+            ).first()
+            if fisa:
+                session.delete(fisa)
             session.delete(r)
             sterse += 1
 
@@ -1075,6 +1080,41 @@ def lista_fise(
         .order_by(FisaOaspete.check_in.desc())
     ).all()
     return [_fisa_dict(f) for f in fise]
+
+
+@app.patch("/api/fise/{id}/reset")
+def reseteaza_fisa(id: int, session: Session = Depends(get_session)):
+    """Șterge datele completate de turist, păstrează fișa."""
+    fisa = session.get(FisaOaspete, id)
+    if not fisa:
+        raise HTTPException(status_code=404, detail="Fișă negăsită")
+    fisa.prenume = None
+    fisa.sex = None
+    fisa.data_nasterii = None
+    fisa.cetatenie = None
+    fisa.tip_document = None
+    fisa.serie_numar = None
+    fisa.tara_emitenta = None
+    fisa.domiciliu = None
+    fisa.confirmare_date = False
+    fisa.semnatura_nume = None
+    fisa.semnatura_img = None
+    fisa.completat_la = None
+    fisa.status = StatusFisa.netrimis
+    session.add(fisa)
+    session.commit()
+    return _fisa_dict(fisa)
+
+
+@app.delete("/api/fise/{id}")
+def sterge_fisa(id: int, session: Session = Depends(get_session)):
+    """Șterge o fișă de oaspete."""
+    fisa = session.get(FisaOaspete, id)
+    if not fisa:
+        raise HTTPException(status_code=404, detail="Fișă negăsită")
+    session.delete(fisa)
+    session.commit()
+    return {"ok": True}
 
 
 @app.patch("/api/fise/{id}/status")

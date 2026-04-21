@@ -171,6 +171,18 @@ export default function FisaTurist() {
     loadFise();
   }
 
+  async function reseteazaFisa(fisa) {
+    if (!confirm(`Ștergi datele completate de turist pentru ${fisa.nume_turist || fisa.booking_id}?`)) return;
+    await fetch(`/api/fise/${fisa.id}/reset`, { method: "PATCH" });
+    loadFise();
+  }
+
+  async function stergeFisa(fisa) {
+    if (!confirm(`Ștergi fișa pentru ${fisa.nume_turist || fisa.booking_id}?`)) return;
+    await fetch(`/api/fise/${fisa.id}`, { method: "DELETE" });
+    loadFise();
+  }
+
   const filtrate = fise.filter((f) => {
     if (filtruStatus && f.status !== filtruStatus) return false;
     if (dataDe && f.check_in < dataDe) return false;
@@ -314,11 +326,15 @@ export default function FisaTurist() {
                           </span>
                         </td>
                         <td>
-                          <div style={{ display: "flex", gap: 6 }}>
+                          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                             <button className="btn btn-primary btn-sm" onClick={() => setModalFisa(f)}>📨 Mesaj</button>
                             {f.status === "netrimis" && (
                               <button className="btn btn-outline btn-sm" onClick={() => marcheazaTrimis(f)}>✓ Trimis</button>
                             )}
+                            {f.status === "completat" && (
+                              <button className="btn btn-ghost btn-sm" onClick={() => reseteazaFisa(f)} title="Șterge datele completate de turist">🔄 Reset</button>
+                            )}
+                            <button className="btn btn-danger btn-sm" onClick={() => stergeFisa(f)} title="Șterge fișa">🗑</button>
                           </div>
                         </td>
                       </tr>
