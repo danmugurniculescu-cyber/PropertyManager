@@ -60,7 +60,7 @@ app.add_middleware(
 @app.middleware("http")
 async def basic_auth_middleware(request: Request, call_next):
     """Protejează toate rutele cu Basic Auth, exceptând fișa publică a oaspeților."""
-    public_prefixes = ("/api/fisa/", "/fisa/")
+    public_prefixes = ("/api/fisa/", "/fisa/", "/assets/", "/favicon")
     path = request.url.path
     if any(path.startswith(p) for p in public_prefixes):
         return await call_next(request)
