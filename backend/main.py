@@ -10,7 +10,9 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional
 
+import secrets
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -30,12 +32,59 @@ OUTPUT_DIR = BASE_DIR / "output"
 
 app = FastAPI(title="Taxa Turism Manager", version="1.0.0")
 
+# ── HTTP Basic Auth ──────────────────────────────────────
+_security = HTTPBasic(auto_error=False)
+_APP_USER = os.environ.get("APP_USERNAME", "admin")
+_APP_PASS = os.environ.get("APP_PASSWORD", "changeme")
+
+def require_auth(credentials: HTTPBasicCredentials = Depends(_security)):
+    """Verifică credențialele. Rutele publice (/api/fisa, /fisa) sunt excluse în middleware."""
+    ok = credentials is not None and (
+        secrets.compare_digest(credentials.username.encode(), _APP_USER.encode()) and
+        secrets.compare_digest(credentials.password.encode(), _APP_PASS.encode())
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=401,
+            detail="Autentificare necesară",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def basic_auth_middleware(request: Request, call_next):
+    """Protejează toate rutele cu Basic Auth, exceptând fișa publică a oaspeților."""
+    public_prefixes = ("/api/fisa/", "/fisa/")
+    path = request.url.path
+    if any(path.startswith(p) for p in public_prefixes):
+        return await call_next(request)
+
+    # Verifică Authorization header
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Basic "):
+        import base64
+        try:
+            decoded = base64.b64decode(auth[6:]).decode("utf-8")
+            username, _, password = decoded.partition(":")
+            user_ok = secrets.compare_digest(username.encode(), _APP_USER.encode())
+            pass_ok = secrets.compare_digest(password.encode(), _APP_PASS.encode())
+            if user_ok and pass_ok:
+                return await call_next(request)
+        except Exception:
+            pass
+
+    from fastapi.responses import Response
+    return Response(
+        content="Autentificare necesară",
+        status_code=401,
+        headers={"WWW-Authenticate": 'Basic realm="PropertyManager"'},
+    )
 
 
 @app.on_event("startup")
