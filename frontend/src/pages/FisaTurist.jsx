@@ -334,6 +334,9 @@ export default function FisaTurist() {
                             {f.status === "completat" && (
                               <button className="btn btn-ghost btn-sm" onClick={() => reseteazaFisa(f)} title="Șterge datele completate de turist">🔄 Reset</button>
                             )}
+                            {f.status === "trimis" && (
+                              <span style={{ display: "inline-block", width: 70 }} />
+                            )}
                             <button className="btn btn-danger btn-sm" onClick={() => stergeFisa(f)} title="Șterge fișa">🗑</button>
                           </div>
                         </td>
