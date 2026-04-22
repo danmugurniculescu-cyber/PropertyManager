@@ -201,7 +201,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                 const isAirbnb   = r.sursa === "airbnb" || r.sursa === "manual";
                 const comision   = platit * comisionRate(r.sursa);
                 const incasat    = platit - comision - platit * 0.013;
-                const venit      = platit - taxaTurism;
+                const venit      = incasat - taxaTurism;
                 const tvaIntra   = isAirbnb ? null : comision * 0.21;
                 const profitNet  = venit - (tvaIntra ?? 0);
                 const isManual   = isAirbnb;
@@ -282,7 +282,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                     const com = (r.pret_platit ?? 0) * comisionRate(r.sursa);
                     return s + com * 0.21;
                   }, 0);
-                  const totVenit    = totPlatit - (grup.taxa_totala ?? taxaEst);
+                  const totVenit    = totIncasat - (grup.taxa_totala ?? taxaEst);
                   const totProfit   = totVenit - totTva;
                   const FP = "6px 6px";
                   return (<>
