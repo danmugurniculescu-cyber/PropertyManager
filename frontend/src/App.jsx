@@ -6,6 +6,7 @@ import Rezervari from "./pages/Rezervari";
 import FisaTurist from "./pages/FisaTurist";
 import FisaPublica from "./pages/FisaPublica";
 import Curatenie from "./pages/Curatenie";
+import Financiar from "./pages/Financiar";
 
 export default function App() {
   return (
@@ -31,6 +32,9 @@ export default function App() {
               <NavLink to="/fise" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
                 🪪 Fișe oaspeți
               </NavLink>
+              <NavLink to="/financiar" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+                💳 Financiar
+              </NavLink>
             </nav>
             <Routes>
               <Route path="/" element={<Dashboard />} />
@@ -39,6 +43,7 @@ export default function App() {
               <Route path="/declaratii/:id" element={<Declaratie />} />
               <Route path="/curatenie" element={<Curatenie />} />
               <Route path="/fise" element={<FisaTurist />} />
+              <Route path="/financiar" element={<Financiar />} />
             </Routes>
           </>
         } />

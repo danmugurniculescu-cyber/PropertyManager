@@ -96,6 +96,16 @@ class FisaOaspete(SQLModel, table=True):
     semnatura_img: Optional[str] = None  # base64 PNG
 
 
+class Tranzactie(SQLModel, table=True):
+    """Tranzacție bancară importată din extras de cont PDF."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    referinta: str = Field(unique=True, index=True)
+    data: date
+    suma: float
+    ordonator: str = Field(default="BOOKING.COM BV")
+    creat_la: datetime = Field(default_factory=datetime.now)
+
+
 class RezervaraImportata(SQLModel, table=True):
     """Stochează toate rezervările văzute în orice XLS uploadat — persistent, independent de declarații."""
     id: Optional[int] = Field(default=None, primary_key=True)

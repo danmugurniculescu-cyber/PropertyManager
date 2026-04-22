@@ -22,7 +22,7 @@ from sqlmodel import Session, select
 sys.path.insert(0, str(Path(__file__).parent))
 
 from database import engine, get_session, init_db
-from models import Declaratie, Proprietate, Rezervare, StatusDeclaratie
+from models import Declaratie, Proprietate, Rezervare, StatusDeclaratie, Tranzactie
 from services.booking_parser import parseaza_xls, importa_xls_complet
 from services.folder_builder import construieste_folder
 from services.pdf_generator import genereaza_pdf
@@ -1331,6 +1331,237 @@ def export_fise_excel(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+# ──────────────────────────────────────────────
+# Financiar — extras de cont ING
+# ──────────────────────────────────────────────
+
+def _parse_extras_pdf(pdf_bytes: bytes) -> list[dict]:
+    """
+    Parsează un extras de cont ING România (PDF) și returnează tranzacțiile de tip Incasare.
+
+    Format ING: fiecare tranzacție are:
+      - Linie header: "DD luna YYYY  Incasare  <credit>  <balanta>"
+      - Sub-linie: "Data: DD-MM-YYYY"
+      - Sub-linie: "Ordonator:BOOKING.COM BV"
+      - Sub-linie: "Referinta:<numar>"
+    Tranzacțiile de tip Debit (Cumparare POS etc.) nu au Referinta și sunt ignorate.
+    """
+    import pdfplumber
+    import re
+    import io
+    from datetime import date as date_cls
+
+    # Extrage tot textul din PDF
+    lines = []
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for page in pdf.pages:
+            t = page.extract_text()
+            if t:
+                lines.extend(t.split("\n"))
+
+    tranzactii = []
+
+    # Parcurge liniile; când găsim "Incasare" cu sume, colectăm blocul următor
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+
+        # Linie header Incasare: conține cuvântul "Incasare" și cel puțin două sume
+        if "Incasare" in line:
+            # Extrage toate sumele numerice din linie (format românesc: 1.234,56)
+            sume = re.findall(r'\d{1,3}(?:\.\d{3})*,\d{2}', line)
+            if len(sume) >= 1:
+                # Prima sumă = credit (a doua ar fi balanta)
+                credit_str = sume[0].replace(".", "").replace(",", ".")
+                try:
+                    credit = float(credit_str)
+                except ValueError:
+                    i += 1
+                    continue
+
+                # Caută în următoarele ~10 linii: Data:, Ordonator:, Referinta:
+                data_val = None
+                referinta_val = None
+                ordonator_val = "BOOKING.COM BV"
+
+                j = i + 1
+                while j < len(lines) and j < i + 12:
+                    sub = lines[j].strip()
+
+                    m_data = re.match(r'Data:\s*(\d{2}-\d{2}-\d{4})', sub)
+                    if m_data:
+                        d = m_data.group(1).split("-")  # [DD, MM, YYYY]
+                        try:
+                            data_val = date_cls(int(d[2]), int(d[1]), int(d[0]))
+                        except ValueError:
+                            pass
+
+                    m_ref = re.match(r'Referinta:(\d+)', sub)
+                    if m_ref:
+                        referinta_val = m_ref.group(1)
+
+                    m_ord = re.match(r'Ordonator:(.+)', sub)
+                    if m_ord:
+                        ordonator_val = m_ord.group(1).strip()
+
+                    j += 1
+
+                if data_val and referinta_val and credit > 0:
+                    tranzactii.append({
+                        "referinta": referinta_val,
+                        "data": data_val,
+                        "suma": credit,
+                        "ordonator": ordonator_val,
+                    })
+
+        i += 1
+
+    return tranzactii
+
+
+@app.post("/api/financiar/upload")
+async def upload_extras(
+    pdf_file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    """Parsează PDF extras de cont și salvează tranzacțiile (upsert după referinta)."""
+    if not pdf_file.filename or not pdf_file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=422, detail="Fișierul trebuie să fie PDF.")
+
+    pdf_bytes = await pdf_file.read()
+    try:
+        tranzactii_raw = _parse_extras_pdf(pdf_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Eroare la parsarea PDF: {e}")
+
+    if not tranzactii_raw:
+        raise HTTPException(
+            status_code=422,
+            detail="Nu s-au găsit tranzacții în PDF. Verifică formatul fișierului.",
+        )
+
+    noi = 0
+    duplicate = 0
+    for t in tranzactii_raw:
+        existing = session.exec(
+            select(Tranzactie).where(Tranzactie.referinta == t["referinta"])
+        ).first()
+        if existing:
+            duplicate += 1
+            continue
+        session.add(Tranzactie(
+            referinta=t["referinta"],
+            data=t["data"],
+            suma=t["suma"],
+            ordonator=t.get("ordonator", "BOOKING.COM BV"),
+        ))
+        noi += 1
+
+    session.commit()
+    return {"noi": noi, "duplicate": duplicate, "total_gasite": len(tranzactii_raw)}
+
+
+@app.get("/api/financiar")
+def lista_tranzactii(
+    an: Optional[int] = None,
+    session: Session = Depends(get_session),
+):
+    """Returnează tranzacțiile grupate pe luni cu Taxa T din declarații. Filtrare după an."""
+    from datetime import date as date_cls
+
+    if an is None:
+        an = date_cls.today().year
+
+    query = select(Tranzactie).where(
+        Tranzactie.data >= date_cls(an, 1, 1),
+        Tranzactie.data <= date_cls(an, 12, 31),
+    ).order_by(Tranzactie.data)
+
+    tranzactii = session.exec(query).all()
+
+    # Grupare pe luni
+    grupuri: dict[tuple, list] = {}
+    for t in tranzactii:
+        key = (t.data.year, t.data.month)
+        if key not in grupuri:
+            grupuri[key] = []
+        grupuri[key].append({
+            "id": t.id,
+            "referinta": t.referinta,
+            "data": t.data.isoformat(),
+            "suma": t.suma,
+            "ordonator": t.ordonator,
+        })
+
+    # Calculează taxa T per (an, luna) din rezervarile importate
+    # (nopti × persoane × taxa_per_noapte, grupate după check_out) — identic cu Rezervări.jsx
+    from models import RezervaraImportata
+
+    props = session.exec(select(Proprietate)).all()
+    taxa_per_prop = {p.id: p.taxa_per_noapte for p in props}
+
+    toate_rez = session.exec(select(RezervaraImportata)).all()
+    taxa_per_luna: dict[tuple, float] = {}
+    for r in toate_rez:
+        co = r.check_out
+        key = (co.year, co.month)
+        nopti = (co - r.check_in).days
+        taxa_noapte = taxa_per_prop.get(r.proprietate_id, 10.0)
+        taxa_per_luna[key] = taxa_per_luna.get(key, 0.0) + nopti * r.persoane * taxa_noapte
+
+    COTA_IMPOZIT = 0.07  # 7%
+
+    luni_list = []
+    total_incasari = 0.0
+    total_taxa_t = 0.0
+    for (y, m), items in sorted(grupuri.items(), reverse=True):
+        subtotal = round(sum(i["suma"] for i in items), 2)
+        taxa_t = round(taxa_per_luna.get((y, m), 0.0), 2)
+        val_impozabila = round(subtotal - taxa_t, 2)
+        impozit = round(val_impozabila * COTA_IMPOZIT, 2)
+        total_incasari += subtotal
+        total_taxa_t += taxa_t
+        luni_list.append({
+            "an": y,
+            "luna": m,
+            "tranzactii": items,
+            "subtotal": subtotal,
+            "taxa_t": taxa_t,
+            "val_impozabila": val_impozabila,
+            "impozit": impozit,
+        })
+
+    total_incasari = round(total_incasari, 2)
+    total_taxa_t = round(total_taxa_t, 2)
+    total_val_impozabila = round(total_incasari - total_taxa_t, 2)
+    total_impozit = round(total_val_impozabila * COTA_IMPOZIT, 2)
+
+    # Returnează și anii disponibili pentru filtru
+    ani_query = session.exec(select(Tranzactie)).all()
+    ani = sorted({t.data.year for t in ani_query}, reverse=True)
+
+    return {
+        "an": an,
+        "luni": luni_list,
+        "total_incasari": total_incasari,
+        "total_taxa_t": total_taxa_t,
+        "total_val_impozabila": total_val_impozabila,
+        "total_impozit": total_impozit,
+        "ani_disponibili": ani,
+    }
+
+
+@app.delete("/api/financiar/{id}")
+def sterge_tranzactie(id: int, session: Session = Depends(get_session)):
+    """Șterge o tranzacție individual."""
+    t = session.get(Tranzactie, id)
+    if not t:
+        raise HTTPException(status_code=404, detail="Tranzacție negăsită")
+    session.delete(t)
+    session.commit()
+    return {"ok": True}
 
 
 # ──────────────────────────────────────────────
