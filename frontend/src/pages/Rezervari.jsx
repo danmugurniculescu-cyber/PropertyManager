@@ -13,8 +13,8 @@ function fmt(iso) {
 const EMPTY_FORM = { numar_rezervare: "", nume_turist: "", check_in: "", check_out: "", persoane: 1, pret_platit: "" };
 
 function comisionRate(sursa) {
-  // Airbnb: 3% + 21% TVA inclus = 3% × 1.21; Booking: 16.3% (fara TVA separat)
-  return sursa === "airbnb" ? 0.03 * 1.21 : 0.163;
+  // Airbnb: 3% + 21% TVA inclus = 3% × 1.21; Booking: 15% (fara TVA separat)
+  return sursa === "airbnb" ? 0.03 * 1.21 : 0.15;
 }
 
 function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters }) {
