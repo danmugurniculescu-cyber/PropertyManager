@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useProprietate } from "../hooks/useProprietate";
 
 const LUNI = ["", "Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
                "Iul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -107,7 +108,7 @@ function MesajModal({ fisa, onClose }) {
 
 export default function FisaTurist() {
   const [proprietati, setProprietati] = useState([]);
-  const [proprietateId, setProprietateId] = useState("");
+  const [proprietateId, setProprietateId] = useProprietate(proprietati);
   const [fise, setFise] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
@@ -125,7 +126,6 @@ export default function FisaTurist() {
   useEffect(() => {
     fetch("/api/proprietati").then((r) => r.json()).then((d) => {
       setProprietati(d);
-      if (d.length > 0) setProprietateId(String(d[0].id));
     });
   }, []);
 

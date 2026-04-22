@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useProprietate } from "../hooks/useProprietate";
 
 const LUNI = ["", "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
                "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"];
@@ -159,7 +160,7 @@ function IntervalCard({ item, urmatoarea }) {
 
 export default function Curatenie() {
   const [proprietati, setProprietati] = useState([]);
-  const [proprietateId, setProprietateId] = useState("");
+  const [proprietateId, setProprietateId] = useProprietate(proprietati);
   const [luna, setLuna] = useState(azi.getMonth() + 1);
   const [an, setAn] = useState(azi.getFullYear());
   const [arataSiUrmatoarea, setArataSiUrmatoarea] = useState(true);
@@ -171,7 +172,6 @@ export default function Curatenie() {
   useEffect(() => {
     fetch("/api/proprietati").then((r) => r.json()).then((d) => {
       setProprietati(d);
-      if (d.length > 0) setProprietateId(String(d[0].id));
     });
   }, []);
 

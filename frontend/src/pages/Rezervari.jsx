@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "../components/StatusBadge";
+import { useProprietate } from "../hooks/useProprietate";
 
 const LUNI = ["", "Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie",
                "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"];
@@ -457,7 +458,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
 
 export default function Rezervari() {
   const [proprietati, setProprietati] = useState([]);
-  const [proprietateId, setProprietateId] = useState("");
+  const [proprietateId, setProprietateId] = useProprietate(proprietati);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
@@ -472,7 +473,6 @@ export default function Rezervari() {
       .then((r) => r.json())
       .then((d) => {
         setProprietati(d);
-        if (d.length > 0) setProprietateId(String(d[0].id));
       });
   }, []);
 
