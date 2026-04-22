@@ -200,7 +200,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                 const platit     = r.pret_platit ?? 0;
                 const isAirbnb   = r.sursa === "airbnb" || r.sursa === "manual";
                 const comision   = platit * comisionRate(r.sursa);
-                const incasat    = platit - comision - platit * 0.015;
+                const incasat    = platit - comision - platit * 0.013;
                 const venit      = platit - comision - taxaTurism;
                 const tvaIntra   = isAirbnb ? null : comision * 0.21;
                 const profitNet  = venit - (tvaIntra ?? 0);
@@ -276,7 +276,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                   if (!hasPrice) return <td colSpan={5} />;
                   const totPlatit   = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0), 0);
                   const totComision = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0) * comisionRate(r.sursa), 0);
-                  const totIncasat  = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0) - (r.pret_platit ?? 0) * comisionRate(r.sursa) - (r.pret_platit ?? 0) * 0.015, 0);
+                  const totIncasat  = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0) - (r.pret_platit ?? 0) * comisionRate(r.sursa) - (r.pret_platit ?? 0) * 0.013, 0);
                   const totTva      = grup.rezervari.reduce((s, r) => {
                     if (r.sursa === "airbnb" || r.sursa === "manual") return s;
                     const com = (r.pret_platit ?? 0) * comisionRate(r.sursa);
