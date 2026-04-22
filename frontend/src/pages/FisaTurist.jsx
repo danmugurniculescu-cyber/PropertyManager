@@ -210,36 +210,7 @@ export default function FisaTurist() {
         )}
       </div>
 
-      {/* Import */}
-      <div className="card" style={{ borderTop: "3px solid #60a5fa" }}>
-        <div className="card-title">📥 Importă rezervări din XLS</div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <div
-            className={`file-drop${over ? " over" : ""}`}
-            style={{ padding: "10px 20px", flex: 1, minWidth: 200 }}
-            onClick={() => inputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); setOver(true); }}
-            onDragLeave={() => setOver(false)}
-            onDrop={(e) => { e.preventDefault(); setOver(false); handleFile(e.dataTransfer.files[0]); }}
-          >
-            <input ref={inputRef} type="file" accept=".xls,.xlsx"
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => handleFile(e.target.files[0])} />
-            {fisier ? <span className="file-name">✅ {fisier.name}</span>
-              : <span>📂 <strong>Trage XLS</strong> sau click</span>}
-          </div>
-          <button className="btn btn-primary" onClick={handleImport} disabled={!fisier || loadingImport}>
-            {loadingImport ? <><span className="spinner" /> Se importă...</> : "📥 Importă"}
-          </button>
-        </div>
-        {error && <div className="alert alert-error" style={{ marginTop: 10 }}>{error}</div>}
-        {importStats && (
-          <div className="alert alert-success" style={{ marginTop: 10 }}>
-            ✅ <strong>{importStats.noi}</strong> fișe noi create,{" "}
-            <strong>{importStats.actualizate}</strong> actualizate.
-          </div>
-        )}
-      </div>
+      {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
 
       {/* Sumar */}
       {fise.length > 0 && (
