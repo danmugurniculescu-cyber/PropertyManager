@@ -184,7 +184,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                 {[
                   "Nr. rezervare", "Sursa", "Nume turist", "Check-in", "Check-out",
                   "Pers.", "Zile", "Taxa T", "Plătit",
-                  "Comision", "Venit", "TVA", "Net", "",
+                  "Comision", "Încasat", "Venit", "TVA", "Net", "",
                 ].map((h) => (
                   <th key={h} style={{
                     background: "#f9fafb", padding: "5px 6px", textAlign: "center",
@@ -200,6 +200,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                 const platit     = r.pret_platit ?? 0;
                 const isAirbnb   = r.sursa === "airbnb" || r.sursa === "manual";
                 const comision   = platit * comisionRate(r.sursa);
+                const incasat    = platit - comision - platit * 0.015;
                 const venit      = platit - comision - taxaTurism;
                 const tvaIntra   = isAirbnb ? null : comision * 0.21;
                 const profitNet  = venit - (tvaIntra ?? 0);
@@ -230,6 +231,9 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                     </td>
                     <td style={{ padding: P, textAlign: "right" }}>
                       {r.pret_platit != null ? comision.toFixed(2) : <span style={{ color: "#9ca3af" }}>—</span>}
+                    </td>
+                    <td style={{ padding: P, textAlign: "right", color: "#1d4ed8" }}>
+                      {r.pret_platit != null ? incasat.toFixed(2) : <span style={{ color: "#9ca3af" }}>—</span>}
                     </td>
                     <td style={{ padding: P, textAlign: "right", fontWeight: 600, color: "#15803d" }}>
                       {r.pret_platit != null ? venit.toFixed(2) : <span style={{ color: "#9ca3af" }}>—</span>}
@@ -272,6 +276,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                   if (!hasPrice) return <td colSpan={5} />;
                   const totPlatit   = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0), 0);
                   const totComision = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0) * comisionRate(r.sursa), 0);
+                  const totIncasat  = grup.rezervari.reduce((s, r) => s + (r.pret_platit ?? 0) - (r.pret_platit ?? 0) * comisionRate(r.sursa) - (r.pret_platit ?? 0) * 0.015, 0);
                   const totTva      = grup.rezervari.reduce((s, r) => {
                     if (r.sursa === "airbnb" || r.sursa === "manual") return s;
                     const com = (r.pret_platit ?? 0) * comisionRate(r.sursa);
@@ -283,6 +288,7 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                   return (<>
                     <td style={{ padding: FP, textAlign: "right", fontWeight: 700 }}>{totPlatit.toFixed(2)}</td>
                     <td style={{ padding: FP, textAlign: "right", fontWeight: 700 }}>{totComision.toFixed(2)}</td>
+                    <td style={{ padding: FP, textAlign: "right", fontWeight: 700, color: "#1d4ed8" }}>{totIncasat.toFixed(2)}</td>
                     <td style={{ padding: FP, textAlign: "right", fontWeight: 700, color: "#15803d" }}>{totVenit.toFixed(2)}</td>
                     <td style={{ padding: FP, textAlign: "right", fontWeight: 700 }}>{totTva.toFixed(2)}</td>
                     <td style={{ padding: FP, textAlign: "right", fontWeight: 800,
