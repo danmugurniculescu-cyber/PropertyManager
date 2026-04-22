@@ -429,7 +429,7 @@ def genereaza_din_import(
             detail=f"Există deja o declarație pentru {luna}/{an} (ID: {existenta.id}, status: {existenta.status.value}).",
         )
 
-    # Găsește rezervările din luna respectivă care nu sunt declarate
+    # Găsește rezervările cu check-out în luna respectivă care nu sunt declarate
     toate = session.exec(
         select(RezervaraImportata).where(
             RezervaraImportata.proprietate_id == proprietate_id,
@@ -437,17 +437,10 @@ def genereaza_din_import(
         )
     ).all()
 
-    prima_zi = date(an, luna, 1)
-    ultima_zi = date(an, luna, cal_mod.monthrange(an, luna)[1])
-
-    def nopti(ci, co):
-        from datetime import timedelta
-        return sum(1 for i in range((co - ci).days) if prima_zi <= ci + timedelta(days=i) <= ultima_zi)
-
     rezervari_lunii = []
     for r in toate:
-        n = nopti(r.check_in, r.check_out)
-        if n > 0:
+        if r.check_out.month == luna and r.check_out.year == an:
+            n = (r.check_out - r.check_in).days
             rezervari_lunii.append((r, n))
 
     if not rezervari_lunii:
@@ -676,9 +669,6 @@ def sterge_rezervari_luna(
             detail=f"Există o declarație pentru {luna}/{an} (ID: {decl.id}, status: {decl.status.value}). Șterge mai întâi declarația.",
         )
 
-    prima_zi = date(an, luna, 1)
-    ultima_zi = date(an, luna, cal_mod.monthrange(an, luna)[1])
-
     toate = session.exec(
         select(RezervaraImportata).where(
             RezervaraImportata.proprietate_id == proprietate_id
@@ -687,12 +677,8 @@ def sterge_rezervari_luna(
 
     sterse = 0
     for r in toate:
-        # Rezervarea aparține lunii dacă are cel puțin o noapte în luna respectivă
-        are_nopti = any(
-            prima_zi <= r.check_in + timedelta(days=i) <= ultima_zi
-            for i in range((r.check_out - r.check_in).days)
-        )
-        if are_nopti:
+        # Rezervarea aparține lunii dacă check-out e în luna respectivă
+        if r.check_out.month == luna and r.check_out.year == an:
             fisa = session.exec(
                 select(FisaOaspete).where(FisaOaspete.booking_id == r.booking_id)
             ).first()
@@ -786,8 +772,8 @@ def sterge_rezervare_manuala(
 
 
 def _grupuri_din_db(proprietate_id: int, session: Session) -> dict:
-    """Construiește răspunsul grupat pe luni din tabelul rezervaraimportata."""
-    import calendar as cal_mod
+    """Construiește răspunsul grupat pe luni din tabelul rezervaraimportata.
+    O rezervare aparține lunii datei de check-out."""
     from models import RezervaraImportata
 
     prop = session.get(Proprietate, proprietate_id)
@@ -796,50 +782,40 @@ def _grupuri_din_db(proprietate_id: int, session: Session) -> dict:
     rezervari = session.exec(
         select(RezervaraImportata)
         .where(RezervaraImportata.proprietate_id == proprietate_id)
-        .order_by(RezervaraImportata.check_in)
+        .order_by(RezervaraImportata.check_out)
     ).all()
 
     grupuri: dict[tuple, dict] = {}
 
     for r in rezervari:
         ci, co = r.check_in, r.check_out
-        y, m = ci.year, ci.month
-        while (y, m) <= (co.year, co.month):
-            from datetime import date as date_cls
-            prima = date_cls(y, m, 1)
-            ultima = date_cls(y, m, cal_mod.monthrange(y, m)[1])
-            nopti = sum(1 for d in _date_range(ci, co) if prima <= d <= ultima)
-            if nopti > 0:
-                key = (m, y)
-                if key not in grupuri:
-                    decl = session.exec(
-                        select(Declaratie).where(
-                            Declaratie.proprietate_id == proprietate_id,
-                            Declaratie.luna == m,
-                            Declaratie.an == y,
-                        )
-                    ).first()
-                    grupuri[key] = {
-                        "rezervari": [],
-                        "declaratie_id": decl.id if decl else None,
-                        "status_declaratie": decl.status.value if decl else None,
-                        "taxa_totala": decl.taxa_totala if decl else None,
-                    }
-                if not any(x["booking_id"] == r.booking_id for x in grupuri[key]["rezervari"]):
-                    grupuri[key]["rezervari"].append({
-                        "booking_id": r.booking_id,
-                        "check_in": r.check_in.isoformat(),
-                        "check_out": r.check_out.isoformat(),
-                        "persoane": r.persoane,
-                        "nopti_in_luna": nopti,
-                        "nume_turist": r.nume_turist,
-                        "pret_platit": r.pret_platit,
-                        "sursa": getattr(r, "sursa", None) or "booking",
-                    })
-            if m == 12:
-                y += 1; m = 1
-            else:
-                m += 1
+        nopti = (co - ci).days  # total nopți sejur
+        key = (co.month, co.year)
+        if key not in grupuri:
+            m, y = co.month, co.year
+            decl = session.exec(
+                select(Declaratie).where(
+                    Declaratie.proprietate_id == proprietate_id,
+                    Declaratie.luna == m,
+                    Declaratie.an == y,
+                )
+            ).first()
+            grupuri[key] = {
+                "rezervari": [],
+                "declaratie_id": decl.id if decl else None,
+                "status_declaratie": decl.status.value if decl else None,
+                "taxa_totala": decl.taxa_totala if decl else None,
+            }
+        grupuri[key]["rezervari"].append({
+            "booking_id": r.booking_id,
+            "check_in": ci.isoformat(),
+            "check_out": co.isoformat(),
+            "persoane": r.persoane,
+            "nopti_in_luna": nopti,
+            "nume_turist": r.nume_turist,
+            "pret_platit": r.pret_platit,
+            "sursa": getattr(r, "sursa", None) or "booking",
+        })
 
     luni_list = sorted(
         [{"luna": l, "an": a, **g} for (l, a), g in grupuri.items()],
