@@ -142,58 +142,6 @@ Your data is stored securely on protected servers, with access restricted exclus
 POLICY CHANGES
 
 The Controller reserves the right to modify this policy. The updated version will be available at ${SITE_URL}/termeni.`,
-
-Please read this document carefully. This document (hereinafter referred to as the "Present document", "Contract" or "Terms and Conditions") represents the conditions for using the website ${SITE_URL} (hereinafter referred to as the "Site") and the conditions for accessing and completing the accommodation forms through the website. By browsing our site you agree to the Terms and Conditions described below. This document is a legal agreement - a contract between you and us. Please also read our Privacy Policy and the Policy on the use of cookies, before browsing the site or filling in the accommodation forms. If you do not agree to these Terms or the Policies indicated above, please do not use the Site.
-
-DEFINITIONS
-
-Personal data means any information relating to an individual that can be identified, directly or indirectly, in particular by reference to an identifier such as name, identification number, location data, online identifiers or one or more factors specific to that person's physical, physiological, economic, cultural or social identity.
-
-Data operator means a natural/legal person who (either alone, or together, or jointly with other data operators) determines the purposes for which and the manner in which personal data are or will be processed.
-
-Target person - Customer.
-
-The persons concerned are the Operator's customers who have purchased accommodation services from the Operator in the accommodation units managed by him or related services and wish to communicate to the Operator the information provided in the "Arrival and Departure Accommodation Form".
-
-ELIGIBILITY
-
-To be able to activate this service on our website you must:
-(1) be over 18 years of age and/or of full legal capacity;
-(2) agree to this Agreement;
-(3) provide us with true, complete and current identity and contact information.
-
-Minors. Access to the Site by persons under the age of 18 is prohibited.
-
-DATA COLLECTED
-
-The personal data of the Operator's customers processed under this contract are:
-- Name, First name, copy of identity document, signature
-- Information regarding the identity document (type, series, number)
-- Data related to the address: Country, County, City, Street, Number, Citizenship
-- Travel-related data: Date of arrival, Date of departure, Purpose of the trip, Reservation-platform number
-- Contact details: phone, email.
-
-LEGAL GROUNDS FOR PERSONAL DATA PROCESSING
-
-Compliance with legal obligations. The operator has the legal obligation to collect certain information about its customers, in accordance with the Annex to the Norm regarding the access, records and protection of tourists in tourist reception structures from 08.02.2001, an integral part of Government Decision no. 237/2001.
-
-STORAGE OF PERSONAL DATA
-
-Personal data are stored for a period of 5 years starting from the date of registration, in accordance with the Annex to the Norm regarding the access, records and protection of tourists in tourist reception structures from 08.02.2001, an integral part of Government Decision no. 237/2001.
-
-RIGHTS OF THE DATA SUBJECT
-
-Right of access to data, right to rectification, right to data deletion, right to restrict processing and right of opposition — in accordance with GDPR Regulation (EU) 2016/679.
-
-For any request regarding your personal data, you may contact the National Supervisory Authority of Personal Data Processing (ANSPDCP), B-dul G-ral. Gheorghe Magheru 28-30, Sector 1, postal code 010336, Bucharest, Romania.
-
-FORCE MAJEURE
-
-We will not be liable for any delay or failure to perform our services if there is a force majeure or an act of God. Force majeure includes but is not limited to changes in laws or regulations, embargoes, wars, acts of terrorism, riots, fires, earthquakes, nuclear accidents, floods, strikes, epidemics, pandemics, weather conditions and acts of hackers.
-
-CONFIDENTIALITY
-
-None of the Contracting Parties has the right, without the prior written consent of the other Party, to disclose any confidential information to a third party or to use any confidential information for a purpose other than that of executing its assumed obligations.`,
 };
 
 export default function TermeniConditii() {
