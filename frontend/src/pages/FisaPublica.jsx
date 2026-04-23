@@ -179,7 +179,7 @@ export default function FisaPublica() {
   const [eroare, setEroare] = useState(null);
   const [validationErr, setValidationErr] = useState(false);
 
-  const [limba, setLimba] = useState("ro");
+  const [limba, setLimba] = useState("en");
   const L = LABEL[limba];
 
   const [form, setForm] = useState({
@@ -262,7 +262,7 @@ export default function FisaPublica() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontWeight: 800, fontSize: 18, color: "#1a3a6b" }}>🏠 Property Management</div>
           <div style={{ display: "flex", gap: 6 }}>
-            {["ro", "en"].map((l) => (
+            {["en", "ro"].map((l) => (
               <button key={l} onClick={() => setLimba(l)} style={{
                 padding: "4px 12px", borderRadius: 6, border: "1.5px solid",
                 borderColor: limba === l ? "#1a3a6b" : "#d1d9ee",
@@ -444,7 +444,7 @@ function PageMsg({ icon, text, sub, limba, setLimba }) {
         <div style={{ fontWeight: 700, fontSize: 20, color: "#1a3a6b", marginBottom: 8 }}>{text}</div>
         {sub && <div style={{ fontSize: 14, color: "#6b7fa8" }}>{sub}</div>}
         <div style={{ marginTop: 20, display: "flex", gap: 8, justifyContent: "center" }}>
-          {["ro", "en"].map((l) => (
+          {["en", "ro"].map((l) => (
             <button key={l} onClick={() => setLimba(l)} style={{
               padding: "4px 12px", borderRadius: 6, border: "1.5px solid",
               borderColor: limba === l ? "#1a3a6b" : "#d1d9ee",

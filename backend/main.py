@@ -1016,6 +1016,40 @@ It only takes about 2 minutes and is mandatory for check-in.
 Kind regards,
 Dan"""
 
+MESAJ_BILINGV = """Dear {nume},
+
+Please complete the guest registration form before your arrival by clicking the link below:
+
+{link}
+
+Booking details:
+• Booking number: {booking_id}
+• Check-in: {check_in}
+• Check-out: {check_out}
+
+It only takes about 2 minutes and is mandatory for check-in.
+
+Kind regards,
+Dan
+
+---
+
+Bună ziua, {nume}!
+
+Vă rugăm să completați fișa de înregistrare înainte de sosire, accesând link-ul de mai jos:
+
+{link}
+
+Detalii rezervare:
+• Nr. rezervare: {booking_id}
+• Check-in: {check_in}
+• Check-out: {check_out}
+
+Completarea durează aproximativ 2 minute și este obligatorie pentru check-in.
+
+Cu drag,
+Dan"""
+
 
 def _sync_fise(proprietate_id: int, session: Session):
     """Creează/actualizează FisaOaspete pentru toate rezervările din proprietate."""
@@ -1175,9 +1209,17 @@ def genereaza_mesaj(
         raise HTTPException(status_code=404, detail="Fișă negăsită")
     base = str(request.base_url).rstrip("/")
     link = f"{base}/fisa/{fisa.token}"
-    template = MESAJ_RO if limba == "ro" else MESAJ_EN
+    if limba == "ro":
+        template = MESAJ_RO
+        nume_default = "Oaspete"
+    elif limba == "en":
+        template = MESAJ_EN
+        nume_default = "Guest"
+    else:  # bilingv
+        template = MESAJ_BILINGV
+        nume_default = "Guest"
     mesaj = template.format(
-        nume=fisa.nume_turist or ("Oaspete" if limba == "ro" else "Guest"),
+        nume=fisa.nume_turist or nume_default,
         link=link,
         booking_id=fisa.booking_id,
         check_in=fisa.check_in.strftime("%d.%m.%Y"),
