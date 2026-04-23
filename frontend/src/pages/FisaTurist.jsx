@@ -25,7 +25,7 @@ function InfoItem({ label, val }) {
 }
 
 function MesajModal({ fisa, onClose }) {
-  const [limba, setLimba] = useState("bilingv");
+  const [limba, setLimba] = useState("en");
   const [mesaj, setMesaj] = useState("");
   const [link, setLink] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,20 +64,16 @@ function MesajModal({ fisa, onClose }) {
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          {[
-            { key: "bilingv", label: "🌐 EN + RO" },
-            { key: "en",      label: "🇬🇧 English" },
-            { key: "ro",      label: "🇷🇴 Română" },
-          ].map(({ key, label }) => (
-            <button key={key} onClick={() => setLimba(key)}
+          {["en", "ro"].map((l) => (
+            <button key={l} onClick={() => setLimba(l)}
               style={{
                 padding: "5px 16px", borderRadius: 6, border: "1.5px solid",
-                borderColor: limba === key ? "#1a3a6b" : "#d1d9ee",
-                background: limba === key ? "#1a3a6b" : "#fff",
-                color: limba === key ? "#fff" : "#374151",
+                borderColor: limba === l ? "#1a3a6b" : "#d1d9ee",
+                background: limba === l ? "#1a3a6b" : "#fff",
+                color: limba === l ? "#fff" : "#374151",
                 fontWeight: 600, cursor: "pointer", fontSize: 13,
               }}>
-              {label}
+              {l === "en" ? "🇬🇧 English" : "🇷🇴 Română"}
             </button>
           ))}
         </div>
