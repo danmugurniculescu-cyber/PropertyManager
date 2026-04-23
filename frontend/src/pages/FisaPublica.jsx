@@ -113,6 +113,8 @@ const LABEL = {
     sec5: "5. Confirmare",
     semnatura: "Semnătură *",
     confirmare: "Declar că datele furnizate sunt corecte și complete.",
+    confirmare_tc: "Am luat la cunoștință și sunt de acord cu Politica de prelucrare a datelor cu caracter personal",
+    link_tc: "Termeni și condiții",
     trimite: "Trimite fișa",
     succes_titlu: "Fișă trimisă cu succes!",
     succes_text: "Vă mulțumim. Datele au fost înregistrate. Ne vedem la check-in!",
@@ -147,6 +149,8 @@ const LABEL = {
     sec5: "5. Confirmation",
     semnatura: "Signature *",
     confirmare: "I declare that the information provided is correct and complete.",
+    confirmare_tc: "I have read and agree with the Personal Data Processing Policy",
+    link_tc: "Terms and conditions",
     trimite: "Submit form",
     succes_titlu: "Form submitted successfully!",
     succes_text: "Thank you. Your details have been recorded. See you at check-in!",
@@ -182,6 +186,7 @@ export default function FisaPublica() {
     prenume: "", sex: "", data_nasterii: "", cetatenie: "",
     tip_document: "", serie_numar: "", tara_emitenta: "",
     domiciliu: "", semnatura_img: null, confirmare_date: false,
+    confirmare_tc: false,
   });
 
   useEffect(() => {
@@ -217,7 +222,7 @@ export default function FisaPublica() {
     e.preventDefault();
     const required = ["sex", "data_nasterii", "cetatenie",
                       "tip_document", "serie_numar", "tara_emitenta", "domiciliu"];
-    if (required.some((k) => !form[k]?.trim()) || !form.semnatura_img || !form.confirmare_date) {
+    if (required.some((k) => !form[k]?.trim()) || !form.semnatura_img || !form.confirmare_date || !form.confirmare_tc) {
       setValidationErr(true);
       return;
     }
@@ -357,6 +362,25 @@ export default function FisaPublica() {
                 style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: "#374151" }}>{L.confirmare}</span>
             </label>
+
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 10, cursor: "pointer" }}>
+              <input type="checkbox" checked={form.confirmare_tc}
+                onChange={(e) => set("confirmare_tc", e.target.checked)}
+                style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: "#374151" }}>
+                {L.confirmare_tc}
+              </span>
+            </label>
+            <div style={{ marginTop: 6, marginLeft: 26 }}>
+              <a
+                href={`/termeni?lang=${limba}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 13, color: "#1a3a6b", fontWeight: 600, textDecoration: "underline" }}
+              >
+                {L.link_tc}
+              </a>
+            </div>
 
             {validationErr && (
               <div style={{ marginTop: 14, padding: "10px 14px", background: "#fef2f2",

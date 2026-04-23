@@ -7,13 +7,15 @@ import FisaTurist from "./pages/FisaTurist";
 import FisaPublica from "./pages/FisaPublica";
 import Curatenie from "./pages/Curatenie";
 import Financiar from "./pages/Financiar";
+import TermeniConditii from "./pages/TermeniConditii";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Pagina publică — fără navbar */}
+        {/* Pagini publice — fără navbar */}
         <Route path="/fisa/:token" element={<FisaPublica />} />
+        <Route path="/termeni" element={<TermeniConditii />} />
 
         {/* Pagini admin — cu navbar */}
         <Route path="/*" element={
