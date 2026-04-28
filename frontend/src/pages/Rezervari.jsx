@@ -101,11 +101,11 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
     }
   }
 
-  async function handleStergeManual(bookingId) {
+  async function handleStergeRezervare(bookingId) {
     if (!window.confirm(`Ștergi rezervarea ${bookingId}?`)) return;
     setDeletingId(bookingId);
     try {
-      const res = await fetch(`/api/rezervari/manual/${bookingId}`, { method: "DELETE" });
+      const res = await fetch(`/api/rezervari/${encodeURIComponent(bookingId)}`, { method: "DELETE" });
       if (!res.ok) { const d = await res.json(); alert(d.detail ?? "Eroare la ștergere."); return; }
       onSters();
     } catch {
@@ -249,12 +249,12 @@ function LunaCard({ grup, proprietateId, taxaPerNoapte = 10, onDeclarat, onSters
                       {r.pret_platit != null ? profitNet.toFixed(2) : "—"}
                     </td>
                     <td style={{ padding: "4px 2px", textAlign: "center" }}>
-                      {isManual && !grup.declaratie_id && !rezultat && (
+                      {!grup.declaratie_id && !rezultat && (
                         <button
                           className="btn btn-danger btn-sm"
                           style={{ padding: "1px 5px", fontSize: 10 }}
                           disabled={deletingId === r.booking_id}
-                          onClick={() => handleStergeManual(r.booking_id)}
+                          onClick={() => handleStergeRezervare(r.booking_id)}
                         >
                           🗑
                         </button>

@@ -771,6 +771,26 @@ def sterge_rezervare_manuala(
     return {"deleted": booking_id}
 
 
+@app.delete("/api/rezervari/{booking_id}")
+def sterge_rezervare(
+    booking_id: str,
+    session: Session = Depends(get_session),
+):
+    """Șterge orice rezervare (Booking sau manual) care nu e încă declarată."""
+    from models import RezervaraImportata
+
+    rez = session.exec(
+        select(RezervaraImportata).where(RezervaraImportata.booking_id == booking_id)
+    ).first()
+    if not rez:
+        raise HTTPException(status_code=404, detail="Rezervare negăsită.")
+    if rez.declaratie_id:
+        raise HTTPException(status_code=409, detail="Rezervarea face parte dintr-o declarație deja generată. Șterge mai întâi declarația.")
+    session.delete(rez)
+    session.commit()
+    return {"deleted": booking_id}
+
+
 def _grupuri_din_db(proprietate_id: int, session: Session) -> dict:
     """Construiește răspunsul grupat pe luni din tabelul rezervaraimportata.
     O rezervare aparține lunii datei de check-out."""
