@@ -10,6 +10,9 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional
 
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
+
 import secrets
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -1070,6 +1073,75 @@ Completarea durează aproximativ 2 minute și este obligatorie pentru check-in.
 Cu drag,
 Dan"""
 
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+NOTIFICARE_DESTINATARI = ["danmugur.niculescu@gmail.com", "radu.niculescu2005@gmail.com"]
+NOTIFICARE_SENDER = "info@dnrentals.eu"
+
+
+def trimite_notificare_fisa(fisa) -> None:
+    """Trimite email de notificare către proprietar când un turist completează fișa."""
+    if not SENDGRID_API_KEY:
+        print("⚠️  SENDGRID_API_KEY lipsă — emailul de notificare nu s-a trimis.")
+        return
+    try:
+        from sendgrid import SendGridAPIClient
+        from sendgrid.helpers.mail import Mail, To
+
+        sex_label = {"M": "Masculin", "F": "Feminin"}.get(fisa.sex or "", fisa.sex or "—")
+        ci = fisa.check_in.strftime("%d.%m.%Y") if fisa.check_in else "—"
+        co = fisa.check_out.strftime("%d.%m.%Y") if fisa.check_out else "—"
+        dn = fisa.data_nasterii.strftime("%d.%m.%Y") if fisa.data_nasterii else "—"
+
+        def rand(label, val, bg="#ffffff"):
+            return (
+                f'<tr style="background:{bg}">'
+                f'<td style="padding:8px 12px;font-weight:700;width:40%;color:#374151">{label}</td>'
+                f'<td style="padding:8px 12px;color:#1a3a6b">{val}</td>'
+                f"</tr>"
+            )
+
+        corp_html = f"""<!DOCTYPE html><html><body>
+        <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto">
+          <div style="background:#1a3a6b;padding:20px 28px;border-radius:10px 10px 0 0">
+            <h2 style="color:#fff;margin:0;font-size:18px">Fisa completata</h2>
+            <p style="color:#a5b4fc;margin:4px 0 0;font-size:13px">Property Management · DNRentals</p>
+          </div>
+          <div style="background:#f8faff;padding:20px 28px;border:1px solid #e0e7ff;border-top:none">
+            <p style="font-size:14px;color:#374151;margin-top:0">
+              Turistul <strong>{fisa.nume_turist or "—"}</strong> a completat fisa de inregistrare.
+            </p>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #e0e7ff;border-radius:8px;overflow:hidden">
+              {rand("Nr. rezervare", fisa.booking_id or "—", "#eef2ff")}
+              {rand("Nume complet", fisa.nume_turist or "—")}
+              {rand("Check-in", ci, "#eef2ff")}
+              {rand("Check-out", co)}
+              {rand("Sex", sex_label, "#eef2ff")}
+              {rand("Data nasterii", dn)}
+              {rand("Cetatenie", fisa.cetatenie or "—", "#eef2ff")}
+              {rand("Document", f"{fisa.tip_document or '—'} {fisa.serie_numar or '—'} ({fisa.tara_emitenta or '—'})")}
+              {rand("Domiciliu", fisa.domiciliu or "—", "#eef2ff")}
+            </table>
+            <p style="font-size:11px;color:#9ca3af;margin-bottom:0;margin-top:16px">
+              info@dnrentals.eu · notificare automata
+            </p>
+          </div>
+        </div>
+        </body></html>"""
+
+        subiect = f"Fisa completata: {fisa.nume_turist or fisa.booking_id} ({ci} - {co})"
+
+        message = Mail(
+            from_email=NOTIFICARE_SENDER,
+            to_emails=[To(addr) for addr in NOTIFICARE_DESTINATARI],
+            subject=subiect,
+            html_content=corp_html,
+        )
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        print(f"✉️  Email notificare trimis — status {response.status_code}")
+    except Exception as exc:
+        print(f"⚠️  Eroare trimitere email notificare: {exc}")
+
 
 def _sync_fise(proprietate_id: int, session: Session):
     """Creează/actualizează FisaOaspete pentru toate rezervările din proprietate."""
@@ -1279,6 +1351,8 @@ def submit_fisa_publica(token: str, body: dict, session: Session = Depends(get_s
     fisa.completat_la = datetime.now()
     session.add(fisa)
     session.commit()
+    session.refresh(fisa)
+    trimite_notificare_fisa(fisa)
     return {"ok": True}
 
 
